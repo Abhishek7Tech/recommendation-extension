@@ -1,0 +1,25 @@
+{
+  "name": "Rating youtube recommendations",
+  "version": "1.0",
+  "description": "This is an extension to get ratings of video recommendations by youtube.",
+  "manifest_version": 3,
+  "author": "Abhishek Lingwal",
+  "host_permissions": ["https://*.youtube.com/*"],
+  "action": {
+    "default_popup": "index.html",
+    "default_title": "Rating youtube recommendations"
+  },
+
+  "permissions": ["activeTab", "scripting"],
+  "content_scripts": [
+    {
+      "matches": ["https://www.youtube.com/*"],
+      "run_at": "document_end",
+      "js": ["contentScript.js"]
+    }
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  }
+}
