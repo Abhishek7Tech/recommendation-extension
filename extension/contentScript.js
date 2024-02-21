@@ -51,8 +51,7 @@ const setVideoRating = (rating) => {
   </div>
 </div>`;
   return html;
-}
-
+};
 
 (async () => {
   console.log("CONTENT ARRAY", contentArray);
@@ -67,13 +66,31 @@ const setVideoRating = (rating) => {
           const videoURL = req.url.slice(23);
           ratings?.map((urls) => {
             const anchorEle = document.querySelector(`a[href='${urls.url}']`);
-            anchorEle.insertAdjacentHTML("afterbegin", setContentRatings(urls.rating));
+            anchorEle.insertAdjacentHTML(
+              "afterbegin",
+              setContentRatings(urls.rating)
+            );
 
-            if(urls.url === videoURL) {
+            if (urls.url === videoURL) {
               console.log("Video url", urls.url, urls.rating);
               const videoEle = document.querySelector("#movie_player");
-              videoEle.insertAdjacentHTML("afterbegin", setVideoRating(urls.rating));
+              videoEle.insertAdjacentHTML(
+                "afterbegin",
+                setVideoRating(urls.rating)
+              );
             }
+
+            const observer = new MutationObserver((mutations) => console.log("CHANGES ARE LIVE", mutations));
+
+            observer.observe(
+              //  document.querySelector('ytd-item-section-renderer .style-scope.ytd-watch-next-secondary-results-renderer'),
+
+              // document.querySelector('body #related.style-scope.ytd-watch-flexy'),
+              {
+                subtree: true,
+                childList: true
+              }
+            );
             // setRatings(urls.rating, anchorEle);
           });
         }
@@ -85,6 +102,7 @@ const setVideoRating = (rating) => {
     console.log("CS_ERROR", error);
   }
 
+ 
   return;
 })();
 

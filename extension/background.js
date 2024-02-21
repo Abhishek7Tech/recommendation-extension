@@ -1,5 +1,7 @@
 try {
   let i = 0;
+ 
+
   chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
     if (
       i < 1 &&
