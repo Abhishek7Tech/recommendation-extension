@@ -44,6 +44,16 @@ const setContentRatings = (rating) => {
   return html;
 };
 
+const setVideoRating = (rating) => {
+  const html = `<div style="border: 1px solid red; width: 50px; height: 40px; z-index: 100; position: absolute; margin:8px">
+  <div style="background-color: orange; height:40px;">
+      <h2 style="text-align: center; vertical-align: middle; margin: 0px; padding: 2px; color: black; font-size: 24px">${rating}</h2>
+  </div>
+</div>`;
+  return html;
+}
+
+
 (async () => {
   console.log("CONTENT ARRAY", contentArray);
   try {
@@ -51,13 +61,19 @@ const setContentRatings = (rating) => {
       console.log("REQ", req);
       if (req.type === "RATE") {
         rateRecommendations();
-        console.log("CONTENT ARRAY", contentArray);
+        // console.log("CONTENT ARRAY", contentArray);
         if (contentArray.length) {
           const ratings = await getRatings(contentArray);
-
+          const videoURL = req.url.slice(23);
           ratings?.map((urls) => {
             const anchorEle = document.querySelector(`a[href='${urls.url}']`);
             anchorEle.insertAdjacentHTML("afterbegin", setContentRatings(urls.rating));
+
+            if(urls.url === videoURL) {
+              console.log("Video url", urls.url, urls.rating);
+              const videoEle = document.querySelector("#movie_player");
+              videoEle.insertAdjacentHTML("afterbegin", setVideoRating(urls.rating));
+            }
             // setRatings(urls.rating, anchorEle);
           });
         }
