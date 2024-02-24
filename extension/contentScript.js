@@ -1,15 +1,15 @@
 let contentArray = [];
 let updatedContentArray = [];
-
+let videoURL = "";
 
 const rateRecommendations = () => {
   contentArray.splice(0, contentArray.length);
   document
-    .querySelectorAll(
+    ?.querySelectorAll(
       "a"
       // ).forEach((item) => console.log("ITEM__2", item.getAttribute("id") === "thumbnail" && item.getAttribute("href")?.includes("/watch") && contentArray.includes(item.getAttribute("href")) ? "" : contentArray.push(item.getAttribute("href"))));
     )
-    .forEach(
+    ?.forEach(
       (item) =>
         item.getAttribute("id") === "thumbnail" &&
         item.getAttribute("href")?.includes("/watch") &&
@@ -37,8 +37,6 @@ const getRatings = async (content) => {
   }
 };
 
-
-
 const setContentRatings = (rating) => {
   const html = `<div id="content-overlay" style="border: 1px solid red; width: fit-content; z-index: 100; position: absolute; margin:4px">
   <div style="background-color: orange;">
@@ -60,6 +58,15 @@ const setVideoRating = (rating) => {
 const setOverLay = (ratings, videoURL) => {
   ratings?.map((urls) => {
     const anchorEle = document.querySelector(`a[href='${urls.url}']`);
+
+    if (anchorEle && anchorEle.querySelector("#content-overlay")) {
+      anchorEle.querySelector("#content-overlay").remove();
+      anchorEle.insertAdjacentHTML(
+        "afterbegin",
+        setContentRatings(urls.rating)
+      );
+    }
+
     if (anchorEle && !anchorEle.querySelector("#content-overlay")) {
       anchorEle.insertAdjacentHTML(
         "afterbegin",
@@ -67,32 +74,50 @@ const setOverLay = (ratings, videoURL) => {
       );
     }
 
-    if (videoURL && urls.url === videoURL) {
-      console.log("Video url", urls.url, urls.rating);
-      const videoEle = document.querySelector("#movie_player");
+    const videoEle = document.querySelector("#movie_player");
+    if (urls.url === videoURL && videoEle.querySelector("#video-overlay")) {
+      // console.log("FOUND VIDEO ELE", videoEle.querySelector("#video-overlay").getElementsByTagName("h2")[0].innerHTML);
+      videoEle.querySelector("#video-overlay").remove();
+      // console.log("REMOVED", videoEle.querySelector("#video-overlay"));
+
+      videoEle.insertAdjacentHTML("afterbegin", setVideoRating(urls.rating));
+    }
+
+    if (
+      videoURL &&
+      urls.url === videoURL &&
+      !videoEle.querySelector("#video-overlay")
+    ) {
       videoEle.insertAdjacentHTML("afterbegin", setVideoRating(urls.rating));
     }
   });
-};
 
+  return;
+};
+let i = 0;
 const observer = new MutationObserver(async (mutations) => {
   setTimeout(async () => {
-    mutations.forEach((item) => {
+    mutations.forEach(async (item) => {
       const target = item.target;
       if ("href" in target) {
         const link = target.href.slice(23);
-        console.log("link", link);
         if (link.includes("/watch") && !updatedContentArray.includes(link)) {
           updatedContentArray.push(link);
+
+          const newContentArray = updatedContentArray.filter(
+            (urls) => !contentArray.includes(urls)
+          );
+          contentArray = [...contentArray, ...newContentArray];
+
+          const ratings = await getRatings(contentArray);
+          setOverLay(ratings, videoURL);
+          contentArray = [];
+          console.log("RUNNING",i++)
+          return;
         }
       }
     });
-    if (updatedContentArray.length > 15) {
-      const ratings = await getRatings(updatedContentArray);
-      setOverLay(ratings, "");
-      updatedContentArray = [];
-    }
-  }, 15000);
+  }, 1000);
 });
 
 (async () => {
@@ -100,17 +125,19 @@ const observer = new MutationObserver(async (mutations) => {
     chrome.runtime.onMessage.addListener(async (req, sender, res) => {
       console.log("REQ", req);
       if (req.type === "RATE") {
+        videoURL = req.url.slice(23);
+        console.log("REQUEST SEND...");
         rateRecommendations();
-        // console.log("CONTENT ARRAY", contentArray);
         if (contentArray.length) {
           const ratings = await getRatings(contentArray);
-          const videoURL = req.url.slice(23);
           setOverLay(ratings, videoURL);
+
           const recommendationsEle = document.querySelector(
             '.style-scope[section-identifier="sid-wn-chips"]'
           );
 
           const content = recommendationsEle.querySelector("#contents");
+
           observer.observe(content, {
             attributes: true,
             subtree: true,
@@ -124,6 +151,7 @@ const observer = new MutationObserver(async (mutations) => {
   } catch (error) {
     console.log("CS_ERROR", error);
   }
+  return;
 })();
 
 // document.querySelector("a[href='/watch?v=MPhz_EqctdA']");

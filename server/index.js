@@ -7,6 +7,7 @@ app.use(cors());
 const port = 7000;
 app.use(express.json());
 
+
 app.post("/", async (req, res) => {
   try {
     if (!req.body) return;
@@ -17,6 +18,7 @@ app.post("/", async (req, res) => {
         const rating = generateRandomString();
         return { url, rating };
       });
+
 
     res.status(200).send(addRatings);
   } catch (err) {
