@@ -2,7 +2,7 @@ let contentArray = [];
 let updatedContentArray = [];
 let videoURL = "";
 
-const rateRecommendations = () => {
+const rateRecommendations = (videoUrl) => {
   contentArray.splice(0, contentArray.length);
   document
     ?.querySelectorAll(
@@ -16,6 +16,11 @@ const rateRecommendations = () => {
         !contentArray.includes(item.getAttribute("href")) &&
         contentArray.push(item.getAttribute("href"))
     );
+
+  !contentArray.includes(videoURL.slice(23)) &&
+    contentArray.push(videoURL.slice(23));
+
+  console.log("RATEEEE");
 };
 
 const getRatings = async (content) => {
@@ -56,6 +61,7 @@ const setVideoRating = (rating) => {
 };
 
 const setOverLay = (ratings, videoURL) => {
+  console.log("VIDEO URL", videoURL);
   ratings?.map((urls) => {
     const anchorEle = document.querySelector(`a[href='${urls.url}']`);
 
@@ -65,72 +71,94 @@ const setOverLay = (ratings, videoURL) => {
         "afterbegin",
         setContentRatings(urls.rating)
       );
-    }
-
-    if (anchorEle && !anchorEle.querySelector("#content-overlay")) {
-      anchorEle.insertAdjacentHTML(
+      // console.log("ELE ANCHOR -1")
+    } else {
+      anchorEle?.insertAdjacentHTML(
         "afterbegin",
         setContentRatings(urls.rating)
       );
     }
 
-    const videoEle = document.querySelector("#movie_player");
-    if (urls.url === videoURL && videoEle.querySelector("#video-overlay")) {
-      // console.log("FOUND VIDEO ELE", videoEle.querySelector("#video-overlay").getElementsByTagName("h2")[0].innerHTML);
-      videoEle.querySelector("#video-overlay").remove();
-      // console.log("REMOVED", videoEle.querySelector("#video-overlay"));
+    // if (anchorEle && !anchorEle.querySelector("#content-overlay")) {
+    //   // console.log("ELE ANCHOR -2")
+    // }
 
-      videoEle.insertAdjacentHTML("afterbegin", setVideoRating(urls.rating));
-    }
+    // if (
+    //   urls.url === videoURL &&
+    //   videoEle &&
+    //   videoEle.querySelector("#video-overlay")
+    // ) {
+    //   // console.log("FOUND VIDEO ELE", videoEle.querySelector("#video-overlay").getElementsByTagName("h2")[0].innerHTML);
+    //   videoEle.querySelector("#video-overlay").remove();
+    //   // console.log("REMOVED", videoEle.querySelector("#video-overlay"));
 
-    if (
-      videoURL &&
-      urls.url === videoURL &&
-      !videoEle.querySelector("#video-overlay")
-    ) {
-      videoEle.insertAdjacentHTML("afterbegin", setVideoRating(urls.rating));
-    }
+    //   videoEle.insertAdjacentHTML("afterbegin", setVideoRating(urls.rating));
+    // } else {
+    //   videoEle.insertAdjacentHTML("afterbegin", setVideoRating(urls.rating));
+    // }
+
+    // if (urls.url === videoURL && videoEle && !videoEle.querySelector("#video-overlay")) {
+    // }
   });
+
+  const videoEle = document.querySelector("#movie_player");
+
+  const videoRatings = ratings.filter((urls) => urls.url === videoURL);
+  if (videoRatings[0]?.url && videoEle.querySelector("#video-overlay")) {
+    // console.log("IN IN SIDE-1");
+    videoEle.querySelector("#video-overlay").remove();
+    videoEle.insertAdjacentHTML(
+      "afterbegin",
+      setVideoRating(videoRatings[0].rating)
+    );
+  }
+
+  if (videoRatings[0]?.url && !videoEle.querySelector("#video-overlay")) {
+    // console.log("IN IN SIDE-2");
+    videoEle.insertAdjacentHTML(
+      "afterbegin",
+      setVideoRating(videoRatings[0].rating)
+    );
+  }
 
   return;
 };
-let i = 0;
 const observer = new MutationObserver(async (mutations) => {
-  setTimeout(async () => {
+  // setTimeout(async () => {
     mutations.forEach(async (item) => {
       const target = item.target;
       if ("href" in target) {
         const link = target.href.slice(23);
         if (link.includes("/watch") && !updatedContentArray.includes(link)) {
           updatedContentArray.push(link);
-
-          const newContentArray = updatedContentArray.filter(
-            (urls) => !contentArray.includes(urls)
-          );
-          contentArray = [...contentArray, ...newContentArray];
-
-          const ratings = await getRatings(contentArray);
-          setOverLay(ratings, videoURL);
-          contentArray = [];
-          console.log("RUNNING",i++)
-          return;
+          // // const newContentArray = updatedContentArray.filter(
+          // //   (urls) => !contentArray.includes(urls)
+          // // );
+          // // contentArray = [...contentArray, ...newContentArray];
+          const ratings = await getRatings([link]);
+          console.log("RATINGS", link, ratings);
+          setOverLay(ratings, videoURL.slice(23));
+          // updatedContentArray = []
         }
       }
     });
-  }, 1000);
+  // }, 1000);
+  // const ratings = await getRatings(updatedContentArray);
+  // setOverLay(ratings, videoURL.slice(23));
+  return;
+
 });
 
 (async () => {
   try {
     chrome.runtime.onMessage.addListener(async (req, sender, res) => {
-      console.log("REQ", req);
       if (req.type === "RATE") {
-        videoURL = req.url.slice(23);
-        console.log("REQUEST SEND...");
-        rateRecommendations();
+        videoURL = req.url;
+
+        rateRecommendations(videoURL);
         if (contentArray.length) {
           const ratings = await getRatings(contentArray);
-          setOverLay(ratings, videoURL);
+          setOverLay(ratings, videoURL.slice(23));
 
           const recommendationsEle = document.querySelector(
             '.style-scope[section-identifier="sid-wn-chips"]'
@@ -138,12 +166,13 @@ const observer = new MutationObserver(async (mutations) => {
 
           const content = recommendationsEle.querySelector("#contents");
 
-          observer.observe(content, {
+        videoURL === req.url && observer.observe(content, {
             attributes: true,
             subtree: true,
             childList: true,
           });
         }
+        contentArray = [];
       } else {
         console.log("NOT FOUND");
       }
