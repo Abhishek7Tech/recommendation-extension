@@ -79,26 +79,7 @@ const setOverLay = (ratings, videoURL) => {
       );
     }
 
-    // if (anchorEle && !anchorEle.querySelector("#content-overlay")) {
-    //   // console.log("ELE ANCHOR -2")
-    // }
-
-    // if (
-    //   urls.url === videoURL &&
-    //   videoEle &&
-    //   videoEle.querySelector("#video-overlay")
-    // ) {
-    //   // console.log("FOUND VIDEO ELE", videoEle.querySelector("#video-overlay").getElementsByTagName("h2")[0].innerHTML);
-    //   videoEle.querySelector("#video-overlay").remove();
-    //   // console.log("REMOVED", videoEle.querySelector("#video-overlay"));
-
-    //   videoEle.insertAdjacentHTML("afterbegin", setVideoRating(urls.rating));
-    // } else {
-    //   videoEle.insertAdjacentHTML("afterbegin", setVideoRating(urls.rating));
-    // }
-
-    // if (urls.url === videoURL && videoEle && !videoEle.querySelector("#video-overlay")) {
-    // }
+    
   });
 
   const videoEle = document.querySelector("#movie_player");
@@ -143,8 +124,7 @@ const observer = new MutationObserver(async (mutations) => {
       }
     });
   // }, 1000);
-  // const ratings = await getRatings(updatedContentArray);
-  // setOverLay(ratings, videoURL.slice(23));
+
   return;
 
 });
@@ -183,4 +163,3 @@ const observer = new MutationObserver(async (mutations) => {
   return;
 })();
 
-// document.querySelector("a[href='/watch?v=MPhz_EqctdA']");
